@@ -1,0 +1,9 @@
+roboflow
+ultralytics
+torch
+torchvision
+torchaudio
+python-dotenv
+pandas
+numpy
+opencv-python-headless
