@@ -10,7 +10,7 @@ print(sys.path)
 if str(parent_dir) not in sys.path:
     sys.path.append(str(parent_dir))
     
-import config
+import config as config
 
 setup(
     name='Tennis-Analysis-CV',

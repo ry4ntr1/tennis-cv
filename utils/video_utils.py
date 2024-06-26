@@ -23,23 +23,22 @@ def load_video_frames(video_path):
     video_capture.release()
     return video_frames
 
-def export_video(frames_list, output_path):
-    """
-    Saves a list of frames as a video file.
+import cv2
 
-    Parameters:
-    frames_list (list): List of video frames to be saved.
-    output_path (str): Path where the output video will be saved.
+def export_video(video_frames, output_path):
+    if not video_frames:
+        raise ValueError("No video frames to export.")
+    
+    height, width, layers = video_frames[0].shape
+    size = (width, height)
+    
+    # Define the codec and create VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')  
+    out = cv2.VideoWriter(output_path, fourcc, 24, size)  
+    
+    for frame in video_frames:
+        out.write(frame)
+    
+    out.release()
+    print(f"Video exported to {output_path}")
 
-    Raises:
-    ValueError: If frames_list is empty.
-    """
-    if not frames_list:
-        raise ValueError("The list of frames is empty.")
-
-    frame_height, frame_width = frames_list[0].shape[:2]
-    video_writer = cv2.VideoWriter(output_path, cv2.VideoWriter_fourcc(*'MJPG'), 24, (frame_width, frame_height))
-
-    for frame in frames_list:
-        video_writer.write(frame)
-    video_writer.release()

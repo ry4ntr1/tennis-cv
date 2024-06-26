@@ -7,3 +7,4 @@ python-dotenv
 pandas
 numpy
 opencv-python-headless
+pickle
