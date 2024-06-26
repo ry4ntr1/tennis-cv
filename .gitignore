@@ -155,9 +155,7 @@ dmypy.json
 cython_debug/
 
 .DS_Store
-tennis-ball-detection-6/
 runs/
-*.pt
 wandb/
 data/
 
