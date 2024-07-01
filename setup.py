@@ -1,31 +1,32 @@
+from typing import List
 from setuptools import setup, find_packages
-import sys
-from pathlib import Path
 
+HYPEN_E_DOT='-e .'
+def get_requirements(file_path: str) -> List[str]:
+    """
+    Retrieve a list of requirements from a file.
 
-parent_dir = Path('.').resolve().parent
+    Args:
+        file_path (str): The path to the requirements file.
 
-print(sys.path)
+    Returns:
+        List[str]: A list of requirements.
 
-if str(parent_dir) not in sys.path:
-    sys.path.append(str(parent_dir))
-    
-import config as config
+    """
+    requirements = []
+    with open(file_path) as file_obj:
+        requirements = file_obj.readlines()
+        requirements = [req.replace("\n", "") for req in requirements]
+
+        if HYPEN_E_DOT in requirements:
+            requirements.remove(HYPEN_E_DOT)
+    return requirements
 
 setup(
-    name='Tennis-Analysis-CV',
-    version='0.1.0',
-    packages=find_packages(),
-    install_requires=[
-        line.strip() for line in open("requirements.txt", "r").readlines() if line.strip() and not line.strip().startswith('#')
-    ],
+    name='tennis-cv',
+    version='0.0.1',
     author='Ryan Tri',
     author_email='ry4ntr1@gmail.com',
-    description='Lorem Ipsum',
-    long_description=open('README.md').read(),
-    long_description_content_type='text/markdown',
-    url='https://github.com/ry4ntr1/tennis-cv', 
-    python_requires='>=3.11',  
-    include_package_data=True,
-    zip_safe=False
+    packages=find_packages(),
+    install_requires=get_requirements('requirements.txt')
 )
