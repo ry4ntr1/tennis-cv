@@ -1,6 +1,7 @@
 from utils import load_video_frames, export_video
 from config import SAMPLE_DATA_DIR, TEST_OUTPUT_DIR, MODELS_DIR, TRACKER_STUB_DIR
 from trackers import PlayerTracker, BallTracker
+from keypoint_detection import KeypointDetector
 import os
 from dotenv import load_dotenv
 
@@ -30,6 +31,13 @@ def main():
         video_frames,
         read_from_stub=True,
         stub_path=f"{TRACKER_STUB_DIR}/ball_detection.pkl",
+    )
+
+    keypoint_detector = KeypointDetector(model_path=f"{MODELS_DIR}/keypoints_model.pth")
+
+    keypoint_predictions = keypoint_detector.predict(video_frames[0])
+    output_video_frames = keypoint_detector.draw_keypoints_on_video(
+        video_frames, keypoint_predictions
     )
 
     output_video_frames = player_tracker.draw_bboxes(video_frames, player_detection)
