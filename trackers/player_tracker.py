@@ -1,6 +1,9 @@
 import pickle
 import cv2
 from ultralytics import YOLO
+import sys
+
+sys.path.append("../utils")
 
 
 class PlayerTracker:
@@ -40,13 +43,14 @@ class PlayerTracker:
 
         player_dict = {}
         for box in results.boxes:
-            track_id = int(box.id.tolist()[0])
-            bbox = box.xyxy.tolist()[0]
-            object_cls_id = box.cls.tolist()[0]
-            object_cls_name = id_name_dict[object_cls_id]
+            if box.id is not None:  # Check if box.id is not None
+                track_id = int(box.id.tolist()[0])
+                bbox = box.xyxy.tolist()[0]
+                object_cls_id = box.cls.tolist()[0]
+                object_cls_name = id_name_dict[object_cls_id]
 
-            if object_cls_name == "players":
-                player_dict[track_id] = bbox
+                if object_cls_name == "players":
+                    player_dict[track_id] = bbox
 
         return player_dict
 

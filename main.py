@@ -10,14 +10,14 @@ def main():
     # Load environment variables
     load_dotenv()
 
-    video_path = f"{SAMPLE_DATA_DIR}/sample.mp4"
+    video_path = f"{SAMPLE_DATA_DIR}/sample-2.mp4"
     video_frames = load_video_frames(video_path)
 
     player_tracker = PlayerTracker(model_path=f"{MODELS_DIR}/best.pt")
 
     player_detection = player_tracker.detect_frames(
         video_frames,
-        read_from_stub=True,
+        read_from_stub=False,
         stub_path=f"{TRACKER_STUB_DIR}/player_detection.pkl",
     )
 
@@ -29,7 +29,7 @@ def main():
 
     ball_detection = ball_tracker.detect_frames(
         video_frames,
-        read_from_stub=True,
+        read_from_stub=False,
         stub_path=f"{TRACKER_STUB_DIR}/ball_detection.pkl",
     )
 

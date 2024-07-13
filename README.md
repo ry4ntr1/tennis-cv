@@ -10,5 +10,6 @@ Implementation
 1. training/ball_detection.ipynb
 2. training/keypoint_detection.ipynb
 3. utils/video_utils.py
-4. trackers/player_tracker (review)
-5. 
+4. trackers/player_tracker (review, output detection avg precision and accuracy)
+5. trackers/ball_tracker (review, output detection avg precision and accuracy)
+6. keypoint_detection/keypoint_detection.py (review, output detection avg precision and accuracy)
