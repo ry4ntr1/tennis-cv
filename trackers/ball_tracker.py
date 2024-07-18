@@ -9,6 +9,42 @@ class BallTracker:
         # Initialize the YOLO model with the given model path
         self.model = YOLO(model_path)
 
+    def interpolate_ball_positions(self, ball_positions):
+        # Extract coordinates from ball_positions, replacing empty positions with [None, None, None, None]
+        extracted_positions = []
+        for pos in ball_positions:
+            if pos:
+                coordinates = list(pos.values())[0]
+                extracted_positions.append(coordinates)
+            else:
+                extracted_positions.append([None, None, None, None])
+
+        # Return original ball_positions if extracted_positions is empty or contains only None values
+        if not extracted_positions or all(
+            len(pos) == 0 or all(v is None for v in pos) for pos in extracted_positions
+        ):
+            return ball_positions
+
+        try:
+            # Create a DataFrame from the extracted positions
+            df_ball_positions = pd.DataFrame(
+                extracted_positions, columns=["x1", "y1", "x2", "y2"]
+            )
+        except ValueError as e:
+            # Print the contents causing the ValueError for debugging
+            print("ValueError:", e)
+            print("extracted_positions causing error:", extracted_positions)
+            raise e
+
+        # Interpolate missing values and backfill remaining NaNs
+        df_ball_positions = df_ball_positions.interpolate()
+        df_ball_positions = df_ball_positions.bfill()
+
+        # Convert DataFrame back to list of dictionaries
+        ball_positions = [{1: x} for x in df_ball_positions.to_numpy().tolist()]
+
+        return ball_positions
+
     def detect_frames(self, frames, read_from_stub=False, stub_path=None):
         ball_detections = []
 

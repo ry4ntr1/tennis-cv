@@ -39,6 +39,8 @@ def main():
         video_frames, keypoint_predictions
     )
 
+    ball_detection = ball_tracker.interpolate_ball_positions(ball_detection)
+
     output_video_frames = player_tracker.draw_bboxes(video_frames, player_detection)
     output_video_frames = ball_tracker.draw_bboxes(video_frames, ball_detection)
 
