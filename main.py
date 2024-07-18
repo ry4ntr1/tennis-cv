@@ -3,6 +3,8 @@ from config import SAMPLE_DATA_DIR, TEST_OUTPUT_DIR, MODELS_DIR, TRACKER_STUB_DI
 from trackers import PlayerTracker, BallTracker
 from keypoint_detection import KeypointDetector
 from dotenv import load_dotenv
+import cv2
+
 
 def main():
     load_dotenv()
@@ -39,10 +41,23 @@ def main():
         video_frames, keypoint_predictions
     )
 
+    player_detection = player_tracker.interpolate_player_positions(player_detection)
+
     ball_detection = ball_tracker.interpolate_ball_positions(ball_detection)
 
     output_video_frames = player_tracker.draw_bboxes(video_frames, player_detection)
     output_video_frames = ball_tracker.draw_bboxes(video_frames, ball_detection)
+
+    for i, frame in enumerate(output_video_frames):
+        cv2.putText(
+            frame,
+            f"Frame: {i}",
+            (10, 30),
+            cv2.FONT_HERSHEY_SIMPLEX,
+            1,
+            (0, 0, 255),
+            2,
+        )
 
     export_video(output_video_frames, f"{TEST_OUTPUT_DIR}/output_video_frames.mp4")
 

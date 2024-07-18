@@ -2,14 +2,67 @@ import pickle
 import cv2
 from ultralytics import YOLO
 import sys
+import pandas as pd
+from utils import approx_center, euclidean_distance
 
 # Add the "../utils" directory to the system path to import custom utilities if needed
 sys.path.append("../utils")
+
 
 class PlayerTracker:
     def __init__(self, model_path):
         # Load the YOLO model from the specified path
         self.model = YOLO(model_path)
+
+    def interpolate_player_positions(self, player_positions):
+        # Extract coordinates from player_positions, replacing empty positions with [None, None, None, None]
+        extracted_positions = []
+        for pos in player_positions:
+            if len(pos) == 2:
+                coordinates = list(pos.values())
+                extracted_positions.append(coordinates)
+            else:
+                extracted_positions.append(
+                    [[None, None, None, None], [None, None, None, None]]
+                )
+
+        # Flatten the list of coordinates for the DataFrame
+        flattened_positions = []
+        for frame in extracted_positions:
+            flattened_positions.extend(frame)
+
+        # Return original player_positions if extracted_positions is empty or contains only None values
+        if not flattened_positions or all(
+            len(pos) == 0 or all(v is None for v in pos) for pos in flattened_positions
+        ):
+            return player_positions
+
+        try:
+            # Create a DataFrame from the extracted positions
+            df_player_positions = pd.DataFrame(
+                flattened_positions, columns=["x1", "y1", "x2", "y2"]
+            )
+        except ValueError as e:
+            # Print the contents causing the ValueError for debugging
+            print("ValueError:", e)
+            print("flattened_positions causing error:", flattened_positions)
+            raise e
+
+        # Interpolate missing values and backfill remaining NaNs
+        df_player_positions = df_player_positions.interpolate()
+        df_player_positions = df_player_positions.bfill()
+
+        # Convert DataFrame back to list of dictionaries
+        player_positions = []
+        for i in range(0, len(df_player_positions), 2):
+            player_positions.append(
+                {
+                    1: df_player_positions.iloc[i].tolist(),
+                    2: df_player_positions.iloc[i + 1].tolist(),
+                }
+            )
+
+        return player_positions
 
     def detect_frames(self, frames, read_from_stub=False, stub_path=None):
         """
@@ -46,14 +99,16 @@ class PlayerTracker:
 
         # Loop through each detected bounding box
         for box in results.boxes:
-            track_id = int(box.id.tolist()[0])
-            bbox = box.xyxy.tolist()[0]
-            object_cls_id = box.cls.tolist()[0]
-            object_cls_name = id_name_dict[object_cls_id]
+            # Ensure box.id is not None before proceeding
+            if box.id is not None:
+                track_id = int(box.id.tolist()[0])
+                bbox = box.xyxy.tolist()[0]
+                object_cls_id = box.cls.tolist()[0]
+                object_cls_name = id_name_dict[object_cls_id]
 
-            # Check if the detected object is a player
-            if object_cls_name == "players":
-                player_dict[track_id] = bbox
+                # Check if the detected object is a player
+                if object_cls_name == "players":
+                    player_dict[track_id] = bbox
 
         return player_dict
 
