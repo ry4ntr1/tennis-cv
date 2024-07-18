@@ -42,6 +42,9 @@ def main():
     )
 
     player_detection = player_tracker.interpolate_player_positions(player_detection)
+    player_detection = player_tracker.choose_and_filter_players(
+        keypoint_predictions, player_detection
+    )
 
     ball_detection = ball_tracker.interpolate_ball_positions(ball_detection)
 
