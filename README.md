@@ -16,5 +16,5 @@ Implementation
 
 To Do:
 - Train Ball and Player Detection Separate / Improve Detection Accuracy / Hyperparameter Tune
-- 
+- 2:14:00
 

@@ -89,7 +89,7 @@ class BallTracker:
                     x1, y1, x2, y2 = bbox
                     cv2.putText(
                         frame,
-                        f"Ball ID: {track_id}",
+                        "Tennis Ball",
                         (int(bbox[0]), int(bbox[1] - 10)),
                         cv2.FONT_HERSHEY_SIMPLEX,
                         0.9,
