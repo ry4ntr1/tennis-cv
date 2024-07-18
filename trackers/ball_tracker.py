@@ -1,3 +1,4 @@
+
 from ultralytics import YOLO
 import cv2
 import pickle
@@ -6,10 +7,20 @@ import pandas as pd
 
 class BallTracker:
     def __init__(self, model_path):
-        # Initialize the YOLO model with the given model path
+        """
+        Initialize the BallTracker with the YOLO model from the specified path.
+
+        :param model_path: Path to the YOLO model file.
+        """
         self.model = YOLO(model_path)
 
     def interpolate_ball_positions(self, ball_positions):
+        """
+        Interpolate missing ball positions in a sequence of frames.
+
+        :param ball_positions: List of dictionaries containing ball positions for each frame.
+        :return: Interpolated list of ball positions.
+        """
         # Extract coordinates from ball_positions, replacing empty positions with [None, None, None, None]
         extracted_positions = []
         for pos in ball_positions:
@@ -46,6 +57,14 @@ class BallTracker:
         return ball_positions
 
     def detect_frames(self, frames, read_from_stub=False, stub_path=None):
+        """
+        Detect balls in a list of frames.
+
+        :param frames: List of frames to be processed.
+        :param read_from_stub: Flag indicating whether to read detections from a pre-saved file.
+        :param stub_path: Path to the file for saving/loading detections.
+        :return: List of ball detections for each frame.
+        """
         ball_detections = []
 
         # Load detections from stub file if specified
@@ -67,6 +86,12 @@ class BallTracker:
         return ball_detections
 
     def detect_frame(self, frame):
+        """
+        Detect balls in a single frame.
+
+        :param frame: Frame to be processed.
+        :return: Dictionary of detected balls with their bounding boxes.
+        """
         # Run YOLO model prediction on the frame with a confidence threshold
         results = self.model.predict(frame, conf=0.125)[0]
 
@@ -80,13 +105,22 @@ class BallTracker:
         return ball_dict
 
     def draw_bboxes(self, video_frames, ball_detections):
+        """
+        Draw bounding boxes around detected balls in video frames.
+
+        :param video_frames: List of video frames.
+        :param ball_detections: List of ball detection dictionaries for each frame.
+        :return: List of video frames with bounding boxes drawn.
+        """
         output_video_frames = []
+
         # Draw bounding boxes on each frame
         for frame, ball_dict in zip(video_frames, ball_detections):
             # Ensure ball_dict is a dictionary
             if isinstance(ball_dict, dict):
                 for track_id, bbox in ball_dict.items():
                     x1, y1, x2, y2 = bbox
+                    # Draw the label "Tennis Ball" above the bounding box
                     cv2.putText(
                         frame,
                         "Tennis Ball",
@@ -96,6 +130,7 @@ class BallTracker:
                         (0, 255, 255),
                         2,
                     )
+                    # Draw the bounding box around the ball
                     cv2.rectangle(
                         frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 255), 2
                     )

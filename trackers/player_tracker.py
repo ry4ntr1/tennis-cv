@@ -11,10 +11,20 @@ sys.path.append("../utils")
 
 class PlayerTracker:
     def __init__(self, model_path):
-        # Load the YOLO model from the specified path
+        """
+        Initialize the PlayerTracker with the YOLO model from the specified path.
+
+        :param model_path: Path to the YOLO model file.
+        """
         self.model = YOLO(model_path)
 
     def interpolate_player_positions(self, player_positions):
+        """
+        Interpolate missing player positions in a sequence of frames.
+
+        :param player_positions: List of dictionaries containing player positions for each frame.
+        :return: Interpolated list of player positions.
+        """
         # Extract coordinates from player_positions, replacing empty positions with [None, None, None, None]
         extracted_positions = []
         for pos in player_positions:
@@ -65,10 +75,20 @@ class PlayerTracker:
         return player_positions
 
     def choose_and_filter_players(self, court_keypoints, player_detections):
+        """
+        Choose key players based on court keypoints and filter the detected players.
+
+        :param court_keypoints: List of court keypoints.
+        :param player_detections: List of dictionaries containing player detections for each frame.
+        :return: Filtered list of player detections.
+        """
+        # Choose players from the first frame based on court keypoints
         player_detections_first_frame = player_detections[0]
         chosen_player = self.choose_players(
             court_keypoints, player_detections_first_frame
         )
+
+        # Filter player detections to keep only chosen players
         filtered_player_detections = []
         for player_dict in player_detections:
             filtered_player_dict = {
@@ -80,10 +100,19 @@ class PlayerTracker:
         return filtered_player_detections
 
     def choose_players(self, court_keypoints, player_dict):
+        """
+        Select the two players closest to the court keypoints.
+
+        :param court_keypoints: List of court keypoints.
+        :param player_dict: Dictionary of detected players with their bounding boxes.
+        :return: List of chosen player track IDs.
+        """
         distances = []
         for track_id, bbox in player_dict.items():
+            # Calculate the approximate center of the player bounding box
             player_center = approx_center(bbox)
 
+            # Find the minimum distance from the player center to the court keypoints
             min_distance = float("inf")
             for i in range(0, len(court_keypoints), 2):
                 court_keypoint = (court_keypoints[i], court_keypoints[i + 1])
@@ -106,7 +135,8 @@ class PlayerTracker:
 
     def detect_frames(self, frames, read_from_stub=False, stub_path=None):
         """
-        Detects players in a list of frames.
+        Detect players in a list of frames.
+
         :param frames: List of frames to be processed.
         :param read_from_stub: Flag indicating whether to read detections from a pre-saved file.
         :param stub_path: Path to the file for saving/loading detections.
@@ -115,9 +145,10 @@ class PlayerTracker:
         if read_from_stub and stub_path:
             return self._load_detections(stub_path)
 
+        # Detect players in each frame
         player_detections = [self.detect_frame(frame) for frame in frames]
 
-        # if stub_path is provided, save player detections to .pkl file
+        # If stub_path is provided, save player detections to .pkl file
         if stub_path:
             self._save_detections(player_detections, stub_path)
 
@@ -125,11 +156,12 @@ class PlayerTracker:
 
     def detect_frame(self, frame):
         """
-        Detects players in a single frame.
+        Detect players in a single frame.
+
         :param frame: Frame to be processed.
         :return: Dictionary of detected players with their bounding boxes.
         """
-        # Perform tracking on the single frame, hence [0]
+        # Perform tracking on the single frame
         results = self.model.track(frame, persist=True)[0]
 
         id_name_dict = results.names
@@ -154,7 +186,8 @@ class PlayerTracker:
 
     def draw_bboxes(self, video_frames, player_detections):
         """
-        Draws bounding boxes around detected players in video frames.
+        Draw bounding boxes around detected players in video frames.
+
         :param video_frames: List of video frames.
         :param player_detections: List of player detection dictionaries for each frame.
         :return: List of video frames with bounding boxes drawn.
@@ -174,6 +207,7 @@ class PlayerTracker:
     def _draw_frame_bboxes(self, frame, player_dict):
         """
         Helper method to draw bounding boxes on a single frame.
+
         :param frame: Frame to be processed.
         :param player_dict: Dictionary of detected players with their bounding boxes.
         """
@@ -196,7 +230,8 @@ class PlayerTracker:
 
     def _save_detections(self, detections, path):
         """
-        Saves the detection results to a file.
+        Save the detection results to a file.
+
         :param detections: List of detection results.
         :param path: Path to the file where detections will be saved.
         """
@@ -209,7 +244,8 @@ class PlayerTracker:
 
     def _load_detections(self, path):
         """
-        Loads the detection results from a file.
+        Load the detection results from a file.
+
         :param path: Path to the file from which detections will be loaded.
         :return: List of detection results.
         """
