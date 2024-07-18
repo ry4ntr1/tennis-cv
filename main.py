@@ -2,15 +2,12 @@ from utils import load_video_frames, export_video
 from config import SAMPLE_DATA_DIR, TEST_OUTPUT_DIR, MODELS_DIR, TRACKER_STUB_DIR
 from trackers import PlayerTracker, BallTracker
 from keypoint_detection import KeypointDetector
-import os
 from dotenv import load_dotenv
 
-
 def main():
-    # Load environment variables
     load_dotenv()
 
-    video_path = f"{SAMPLE_DATA_DIR}/sample-2.mp4"
+    video_path = f"{SAMPLE_DATA_DIR}/sample.mp4"
     video_frames = load_video_frames(video_path)
 
     player_tracker = PlayerTracker(model_path=f"{MODELS_DIR}/best.pt")
@@ -21,11 +18,13 @@ def main():
         stub_path=f"{TRACKER_STUB_DIR}/player_detection.pkl",
     )
 
-    ball_tracker = BallTracker(
-        api_key=os.getenv("ROBOFLOW_API_KEY"),
-        project_name="tennis-ball-m7zvw",
-        version_number=3,
-    )
+    # ball_tracker = BallTracker(
+    #     api_key=os.getenv("ROBOFLOW_API_KEY"),
+    #     project_name="tennis-ball-m7zvw",
+    #     version_number=3,
+    # )
+
+    ball_tracker = BallTracker(model_path=f"{MODELS_DIR}/best.pt")
 
     ball_detection = ball_tracker.detect_frames(
         video_frames,

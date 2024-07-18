@@ -3,15 +3,12 @@ import cv2
 from ultralytics import YOLO
 import sys
 
+# Add the "../utils" directory to the system path to import custom utilities if needed
 sys.path.append("../utils")
-
 
 class PlayerTracker:
     def __init__(self, model_path):
-        """
-        Initializes the PlayerTracker with a YOLO model.
-        :param model_path: Path to the YOLO model.
-        """
+        # Load the YOLO model from the specified path
         self.model = YOLO(model_path)
 
     def detect_frames(self, frames, read_from_stub=False, stub_path=None):
@@ -27,6 +24,7 @@ class PlayerTracker:
 
         player_detections = [self.detect_frame(frame) for frame in frames]
 
+        # if stub_path is provided, save player detections to .pkl file
         if stub_path:
             self._save_detections(player_detections, stub_path)
 
@@ -38,19 +36,24 @@ class PlayerTracker:
         :param frame: Frame to be processed.
         :return: Dictionary of detected players with their bounding boxes.
         """
+        # Perform tracking on the single frame, hence [0]
         results = self.model.track(frame, persist=True)[0]
+
         id_name_dict = results.names
 
+        # Dictionary to store detected players with their bounding boxes
         player_dict = {}
-        for box in results.boxes:
-            if box.id is not None:  # Check if box.id is not None
-                track_id = int(box.id.tolist()[0])
-                bbox = box.xyxy.tolist()[0]
-                object_cls_id = box.cls.tolist()[0]
-                object_cls_name = id_name_dict[object_cls_id]
 
-                if object_cls_name == "players":
-                    player_dict[track_id] = bbox
+        # Loop through each detected bounding box
+        for box in results.boxes:
+            track_id = int(box.id.tolist()[0])
+            bbox = box.xyxy.tolist()[0]
+            object_cls_id = box.cls.tolist()[0]
+            object_cls_name = id_name_dict[object_cls_id]
+
+            # Check if the detected object is a player
+            if object_cls_name == "players":
+                player_dict[track_id] = bbox
 
         return player_dict
 
@@ -61,10 +64,15 @@ class PlayerTracker:
         :param player_detections: List of player detection dictionaries for each frame.
         :return: List of video frames with bounding boxes drawn.
         """
+        # List to store video frames with bounding boxes
         output_video_frames = []
+
+        # Loop through each frame and its corresponding player detections
         for frame, player_dict in zip(video_frames, player_detections):
-            self._draw_frame_bboxes(frame, player_dict)
-            output_video_frames.append(frame)
+            self._draw_frame_bboxes(
+                frame, player_dict
+            )  # Draw bounding boxes on the frame
+            output_video_frames.append(frame)  # Add the annotated frame to the list
 
         return output_video_frames
 
@@ -74,8 +82,11 @@ class PlayerTracker:
         :param frame: Frame to be processed.
         :param player_dict: Dictionary of detected players with their bounding boxes.
         """
+        # Loop through each player detection
         for track_id, bbox in player_dict.items():
-            x1, y1, x2, y2 = bbox
+            x1, y1, x2, y2 = bbox  # Get the bounding box coordinates
+
+            # Draw the tracking ID text above the bounding box
             cv2.putText(
                 frame,
                 f"Player ID: {track_id}",
@@ -85,6 +96,7 @@ class PlayerTracker:
                 (0, 0, 255),
                 2,
             )
+            # Draw the bounding box around the player
             cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), (0, 0, 255), 2)
 
     def _save_detections(self, detections, path):
@@ -94,6 +106,7 @@ class PlayerTracker:
         :param path: Path to the file where detections will be saved.
         """
         try:
+            # Open the file in write-binary mode and save detections using pickle
             with open(path, "wb") as f:
                 pickle.dump(detections, f)
         except Exception as e:
@@ -106,6 +119,7 @@ class PlayerTracker:
         :return: List of detection results.
         """
         try:
+            # Open the file in read-binary mode and load detections using pickle
             with open(path, "rb") as f:
                 return pickle.load(f)
         except Exception as e:

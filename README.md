@@ -13,3 +13,8 @@ Implementation
 4. trackers/player_tracker (review, output detection avg precision and accuracy)
 5. trackers/ball_tracker (review, output detection avg precision and accuracy)
 6. keypoint_detection/keypoint_detection.py (review, output detection avg precision and accuracy)
+
+To Do:
+- Train Ball and Player Detection Separate / Improve Detection Accuracy / Hyperparameter Tune
+- 
+
