@@ -36,7 +36,7 @@ def load_video_frames(video_path):
     return video_frames
 
 
-def export_video(video_frames, output_path, fps=60):
+def export_video(video_frames, output_path, fps=24):
     """
     Exports a list of video frames to a new video file.
 
