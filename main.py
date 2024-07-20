@@ -20,7 +20,7 @@ def main():
 
     player_detection = player_tracker.detect_frames(
         video_frames,
-        read_from_stub=False,
+        read_from_stub=True,
         stub_path=f"{TRACKER_STUB_DIR}/player_detection.pkl",
     )
 
@@ -50,6 +50,8 @@ def main():
 
     # BallTracker: Interpolation
     ball_detection = ball_tracker.interpolate_ball_positions(ball_detection)
+
+    ball_shot_frames = ball_tracker.detect_hits(ball_detection)
 
     # Draw Bounding Boxes: Players + Ball + Keypoints
     output_video_frames = player_tracker.draw_bboxes(video_frames, player_detection)
