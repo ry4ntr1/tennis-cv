@@ -51,7 +51,15 @@ def main():
     # BallTracker: Interpolation
     ball_detection = ball_tracker.interpolate_ball_positions(ball_detection)
 
+    # BallTracker: Detect Ball Hits
     ball_shot_frames = ball_tracker.detect_hits(ball_detection)
+
+    # MiniCourt: Convert Player + Tennis Ball Bounding Boxes to Mini Court Coordinates
+    player_mini_court_detection, ball_mini_court_detection = (
+        mini_court.convert_bounding_boxes_to_mini_court_coordinates(
+            player_detection, ball_detection, keypoint_predictions
+        )
+    )
 
     # Draw Bounding Boxes: Players + Ball + Keypoints
     output_video_frames = player_tracker.draw_bboxes(video_frames, player_detection)
