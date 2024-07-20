@@ -3,7 +3,10 @@ from ultralytics import YOLO
 import cv2
 import pickle
 import pandas as pd
+from tqdm import tqdm
+import logging
 
+logging.getLogger("ultralytics").setLevel(logging.CRITICAL)
 
 class BallTracker:
     def __init__(self, model_path):
@@ -74,7 +77,7 @@ class BallTracker:
             return ball_detections
 
         # Detect balls in each frame
-        for frame in frames:
+        for frame in tqdm(frames, desc="Detecting Balls"):
             ball_dict = self.detect_frame(frame)
             ball_detections.append(ball_dict)
 

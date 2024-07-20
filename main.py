@@ -4,7 +4,7 @@ from trackers import PlayerTracker, BallTracker
 from keypoint_detection import KeypointDetector
 from dotenv import load_dotenv
 import cv2
-
+from mini_court import MiniCourt
 
 def main():
 
@@ -38,6 +38,9 @@ def main():
 
     keypoint_predictions = keypoint_detector.predict(video_frames[0])
 
+    # MiniCourt: Init + Draw
+    mini_court = MiniCourt(video_frames[0])
+
     # PlayerTracker: Interpolation + Filtering
     player_detection = player_tracker.interpolate_player_positions(player_detection)
 
@@ -56,6 +59,8 @@ def main():
     output_video_frames = keypoint_detector.draw_keypoints_on_video(
         video_frames, keypoint_predictions
     )
+
+    output_video_frames = mini_court.draw_mini_court(output_video_frames)
 
     # Draw Frame Number (Top Left Corner)
     for i, frame in enumerate(output_video_frames):

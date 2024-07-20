@@ -4,10 +4,12 @@ from ultralytics import YOLO
 import sys
 import pandas as pd
 from utils import approx_center, euclidean_distance
-
+from tqdm import tqdm
+import logging
 # Add the "../utils" directory to the system path to import custom utilities if needed
 sys.path.append("../utils")
 
+logging.getLogger("ultralytics").setLevel(logging.CRITICAL)
 
 class PlayerTracker:
     def __init__(self, model_path):
@@ -145,8 +147,11 @@ class PlayerTracker:
         if read_from_stub and stub_path:
             return self._load_detections(stub_path)
 
-        # Detect players in each frame
-        player_detections = [self.detect_frame(frame) for frame in frames]
+        # Detect players in each frame with progress tracking using tqdm
+        player_detections = []
+        for frame in tqdm(frames, desc="Processing Frames"):
+            detection = self.detect_frame(frame)
+            player_detections.append(detection)
 
         # If stub_path is provided, save player detections to .pkl file
         if stub_path:
@@ -163,7 +168,6 @@ class PlayerTracker:
         """
         # Perform tracking on the single frame
         results = self.model.track(frame, persist=True)[0]
-
         id_name_dict = results.names
 
         # Dictionary to store detected players with their bounding boxes
@@ -172,6 +176,9 @@ class PlayerTracker:
         # Loop through each detected bounding box
         for box in results.boxes:
             # Ensure box.id is not None before proceeding
+            if box is None:
+                print("Empty: ", box)
+
             if box.id is not None:
                 track_id = int(box.id.tolist()[0])
                 bbox = box.xyxy.tolist()[0]
