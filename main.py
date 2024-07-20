@@ -56,7 +56,7 @@ def main():
 
     # MiniCourt: Convert Player + Tennis Ball Bounding Boxes to Mini Court Coordinates
     player_mini_court_detection, ball_mini_court_detection = (
-        mini_court.convert_bounding_boxes_to_mini_court_coordinates(
+        mini_court.add_to_minicourt(
             player_detection, ball_detection, keypoint_predictions
         )
     )
@@ -70,7 +70,17 @@ def main():
         video_frames, keypoint_predictions
     )
 
-    output_video_frames = mini_court.draw_mini_court(output_video_frames)
+    # Add MiniCourt To Video Frames
+    output_video_frames = mini_court.add_court_to_frames(output_video_frames)
+
+    # Draw Player + Ball Positions on MiniCourt
+    output_video_frames = mini_court.draw_positions_on_court(
+        output_video_frames, player_mini_court_detection, color=(0, 255, 255)
+    )
+
+    output_video_frames = mini_court.draw_positions_on_court(
+        output_video_frames, ball_mini_court_detection
+    )
 
     # Draw Frame Number (Top Left Corner)
     for i, frame in enumerate(output_video_frames):
