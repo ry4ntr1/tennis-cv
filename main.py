@@ -5,7 +5,7 @@ from utils import (
     export_video,
     measure_distance,
     convert_pixel_distance_to_meters,
-    convert_meters_to_pixel_distance,
+
     display_stats,
 )
 from config import (
@@ -20,7 +20,7 @@ from keypoint_detection import KeypointDetector
 from dotenv import load_dotenv
 from mini_court import MiniCourt
 from copy import deepcopy
-
+from tqdm import tqdm
 
 def main():
     load_dotenv()
@@ -33,7 +33,7 @@ def main():
     player_tracker = PlayerTracker(model_path=f"{MODELS_DIR}/best.pt")
     player_detection = player_tracker.detect_frames(
         video_frames,
-        read_from_stub=True,
+        read_from_stub=False,
         stub_path=f"{TRACKER_STUB_DIR}/player_detection.pkl",
     )
 
@@ -87,7 +87,9 @@ def main():
         }
     ]
 
-    for frame_idx in range(len(ball_hit_frames) - 1):
+    for frame_idx in tqdm(
+        range(len(ball_hit_frames) - 1), desc="Computing Player and Ball Metrics..."
+    ):
         # Calculate Hit Duration
         start = ball_hit_frames[frame_idx]
         end = ball_hit_frames[frame_idx + 1]

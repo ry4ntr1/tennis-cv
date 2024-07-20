@@ -149,7 +149,7 @@ class PlayerTracker:
 
         # Detect players in each frame with progress tracking using tqdm
         player_detections = []
-        for frame in tqdm(frames, desc="Processing Frames"):
+        for frame in tqdm(frames, desc="Detecting Players"):
             detection = self.detect_frame(frame)
             player_detections.append(detection)
 

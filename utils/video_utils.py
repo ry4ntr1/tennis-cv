@@ -1,4 +1,5 @@
 import cv2
+from tqdm import tqdm
 
 
 def load_video_frames(video_path):
@@ -20,8 +21,9 @@ def load_video_frames(video_path):
         raise IOError(f"Unable to open video file at: {video_path}")
 
     video_frames = []
+    total_frames = int(video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
 
-    while True:
+    for _ in tqdm(range(total_frames), desc="Loading Video Frames..."):
         # Read a whether frame was read, and the actual frame from the video
         frame_success, frame = video_capture.read()
 
@@ -64,9 +66,9 @@ def export_video(video_frames, output_path, fps=24):
     if not out.isOpened():
         raise IOError(f"Unable to create video file at: {output_path}")
 
-    for frame in video_frames:
+    for frame in tqdm(video_frames, desc="Exporting Video Analysis..."):
         out.write(frame)
 
     out.release()
 
-    print(f"\nVideo successfully exported to: {output_path}")
+    print(f"\nSaved To: {output_path}")
