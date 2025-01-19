@@ -244,6 +244,20 @@ class MiniCourt:
         return mini_court_player_position
 
     def add_to_minicourt(self, player_boxes, ball_boxes, court_key_points):
+        """
+        Convert the bounding boxes of players and the ball into their positions on the mini court.
+
+        :param player_boxes: List of dictionaries, one per frame. Each dictionary has:
+                            { player_id: [x1, y1, x2, y2], ... }
+        :param ball_boxes:   List of dictionaries, one per frame. Each dictionary has:
+                            { 1: [x1, y1, x2, y2] } or possibly empty if no ball was detected.
+        :param court_key_points: The key points of the mini court [x0,y0,x1,y1,...].
+        :return: (mini_court_player_boxes, mini_court_ball_boxes)
+                where each is a list (one entry per frame).
+                mini_court_player_boxes[frame] => { player_id: (x,y) on mini court }
+                mini_court_ball_boxes[frame]   => { 1: (x,y) on mini court }
+        """
+        # Only define heights for players we actually expect (e.g., singles tennis)
         player_heights = {
             1: PLAYER_1_HEIGHT_METERS,
             2: PLAYER_2_HEIGHT_METERS,
@@ -252,32 +266,64 @@ class MiniCourt:
         mini_court_player_boxes = []
         mini_court_ball_boxes = []
 
-        for frame_num, player_box in enumerate(player_boxes):
-            ball_box = ball_boxes[frame_num][1]
-            ball_center = get_center_of_bbox(ball_box)
+        # Go through each frame
+        for frame_num, player_dict in enumerate(player_boxes):
+            # Grab the ball bounding box if it exists. (ball_boxes[frame_num] might be empty)
+            ball_dict = ball_boxes[frame_num]
+            ball_box = ball_dict.get(1, None)  # If not detected, returns None
 
-            closest_player_id = min(
-                player_box.keys(),
-                key=lambda x: measure_distance(
-                    ball_center, get_center_of_bbox(player_box[x])
-                ),
-            )
+            if ball_box is not None:
+                # If we found a ball in this frame, get its center
+                ball_center = get_center_of_bbox(ball_box)
+            else:
+                # No ball detected this frame
+                ball_center = None
 
+            # Decide which player is "closest" to the ball — but only if we have a ball
+            if ball_center is not None and len(player_dict) > 0:
+                # If at least one player is detected, find the player with minimal distance to the ball
+                # (Assuming player_dict has {player_id: [x1, y1, x2, y2]} items)
+                closest_player_id = min(
+                    player_dict.keys(),
+                    key=lambda pid: measure_distance(
+                        ball_center, get_center_of_bbox(player_dict[pid])
+                    ),
+                )
+            else:
+                # No ball or no players => can't determine a closest player
+                closest_player_id = None
+
+            # We pick a window around the current frame to find the max player heights
             frame_min = max(0, frame_num - 20)
             frame_max = min(len(player_boxes), frame_num + 50)
 
-            # Precompute the max player heights for this frame window
-            max_heights = {
-                player_id: max(
-                    get_height_of_bbox(player_boxes[i][player_id])
-                    for i in range(frame_min, frame_max)
-                )
-                for player_id in player_box
-            }
+            # Build a dict: {player_id: max_height_in_bbox_over_window}
+            # Only if that player_id is in our expected dictionary
+            max_heights = {}
+            for pid, bbox in player_dict.items():
+                if pid not in player_heights:
+                    continue  # Skip unknown players to avoid KeyError
+                # Collect all bounding boxes for this pid in [frame_min, frame_max)
+                heights_for_pid = []
+                for i in range(frame_min, frame_max):
+                    if pid in player_boxes[i]:
+                        heights_for_pid.append(get_height_of_bbox(player_boxes[i][pid]))
+                if len(heights_for_pid) > 0:
+                    max_heights[pid] = max(heights_for_pid)
+                else:
+                    # Fallback if we never found any bounding box
+                    max_heights[pid] = get_height_of_bbox(bbox)
 
             mini_court_player_dict = {}
-            for player_id, bbox in player_box.items():
+
+            # Convert each player's foot position to mini-court coordinates
+            for pid, bbox in player_dict.items():
+                # Skip if this player's ID isn't in our dictionary or we have no max height
+                if pid not in player_heights or pid not in max_heights:
+                    continue
+
                 foot_pos = get_foot_position(bbox)
+                # We pick among the "four corners" [0,2,12,13] to find the nearest key point
                 closest_key_idx = get_closest_keypoint_index(
                     foot_pos, court_key_points, [0, 2, 12, 13]
                 )
@@ -286,37 +332,45 @@ class MiniCourt:
                     court_key_points[closest_key_idx * 2 + 1],
                 )
 
+                # Convert foot position to mini court position
                 mini_court_player_pos = self.get_mini_court_coordinates(
-                    foot_pos,
-                    closest_key,
-                    closest_key_idx,
-                    max_heights[player_id],
-                    player_heights[player_id],
+                    object_position=foot_pos,
+                    closest_key_point=closest_key,
+                    closest_key_point_index=closest_key_idx,
+                    player_height_in_pixels=max_heights[pid],
+                    player_height_in_meters=player_heights[pid],
                 )
+                mini_court_player_dict[pid] = mini_court_player_pos
 
-                mini_court_player_dict[player_id] = mini_court_player_pos
-
-                if closest_player_id == player_id:
-                    closest_key_idx = get_closest_keypoint_index(
+                # If this player is the closest to the ball, we also map the ball
+                if pid == closest_player_id and ball_center is not None:
+                    # Recompute which key point is closest to the ball
+                    ball_closest_key_idx = get_closest_keypoint_index(
                         ball_center, court_key_points, [0, 2, 12, 13]
                     )
-                    closest_key = (
-                        court_key_points[closest_key_idx * 2],
-                        court_key_points[closest_key_idx * 2 + 1],
+                    ball_closest_key = (
+                        court_key_points[ball_closest_key_idx * 2],
+                        court_key_points[ball_closest_key_idx * 2 + 1],
                     )
 
+                    # Convert ball center to mini court position
                     mini_court_ball_pos = self.get_mini_court_coordinates(
-                        ball_center,
-                        closest_key,
-                        closest_key_idx,
-                        max_heights[player_id],
-                        player_heights[player_id],
+                        object_position=ball_center,
+                        closest_key_point=ball_closest_key,
+                        closest_key_point_index=ball_closest_key_idx,
+                        player_height_in_pixels=max_heights[pid],
+                        player_height_in_meters=player_heights[pid],
                     )
                     mini_court_ball_boxes.append({1: mini_court_ball_pos})
+
+            # If no ball mapped (e.g., no players or no ball), append an empty dict or a None
+            if len(mini_court_ball_boxes) < (frame_num + 1):
+                mini_court_ball_boxes.append({})
 
             mini_court_player_boxes.append(mini_court_player_dict)
 
         return mini_court_player_boxes, mini_court_ball_boxes
+
 
     def draw_positions_on_court(self, frames, positions, color=(0, 255, 0)):
         for frame_num, frame in enumerate(frames):
